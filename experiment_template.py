@@ -3,9 +3,10 @@
 To create another preset, copy this file, give the copy a descriptive name,
 edit its settings, and run it with:
 
-    uv run python your_preset_name.py
+    cp experiment_template.py sandbox/your_preset_name.py
+    uv run python sandbox/your_preset_name.py
 
-The reusable audio code lives in binaural_engine.py.
+The reusable audio code lives in binaural_engine.py and is installed by uv.
 """
 
 from binaural_engine import run_experiment

@@ -19,9 +19,10 @@ a sustained note/chord mode and a simple equal-duration melody mode.
   You normally do not need to edit it.
 - `experiment_template.py` is a settings template. Copy it whenever you want to
   save a new chord or melody preset.
+- `sandbox/` contains your named experiment presets.
 
-Keep the helper and all preset files in the same folder so Python can import
-`binaural_engine`.
+The engine is installed as part of the local uv project, so preset files inside
+`sandbox/` can import it without changing Python paths.
 
 ## Requirements
 
@@ -38,6 +39,9 @@ Open Terminal in this project folder and install the dependencies:
 uv sync
 ```
 
+The project installation performed by `uv sync` makes `binaural_engine`
+available to scripts inside `sandbox/`.
+
 The `sounddevice` package normally includes what it needs on macOS. If it
 reports a PortAudio error, install PortAudio with Homebrew and retry:
 
@@ -52,7 +56,7 @@ Before running the program, select the connected headphones in macOS under
 ## Run
 
 ```bash
-uv run python experiment_template.py
+uv run python sandbox/experiment_template.py
 ```
 
 The program prints the selected settings, generates a stereo NumPy array, and
@@ -60,30 +64,42 @@ plays it using the current macOS default output device.
 
 ## Create named presets
 
-Make a copy of the settings template and give it a descriptive name:
+From the project root, copy the settings template into `sandbox/` and give it a
+descriptive name:
 
 ```bash
-cp experiment_template.py calming_melody.py
+cp experiment_template.py sandbox/calming_melody.py
 ```
 
-Edit the settings inside `calming_melody.py`, then run that specific preset:
+Edit the settings inside `sandbox/calming_melody.py`, then run that preset:
 
 ```bash
+uv run python sandbox/calming_melody.py
+```
+
+You can also enter the sandbox directory and run a preset there:
+
+```bash
+cd sandbox
 uv run python calming_melody.py
 ```
 
-You can keep as many preset files as you like, for example:
+uv finds the project configuration in the parent directory.
+
+You can keep as many preset files as you like:
 
 ```text
 binaural_engine.py
 experiment_template.py
-calming_melody.py
-c_major_chord.py
-eight_hz_sequence.py
+sandbox/
+  experiment_template.py
+  calming_melody.py
+  c_major_chord.py
+  eight_hz_sequence.py
 ```
 
-Only copy the template/preset file. All copies share the functions in
-`binaural_engine.py`.
+Only copy files inside `sandbox/`. All presets share the functions in
+`binaural_engine.py`; do not copy the engine.
 
 ## Chord or single-note mode
 
