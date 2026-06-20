@@ -20,20 +20,21 @@ import numpy as np
 MODE = "chord"
 
 # Chord mode settings. A one-item list plays a single sustained note.
-NOTES = ["C4", "E4", "G4"]
-# NOTES = ["A4"]
-DURATION_SECONDS = 5.0
+NOTES = ["C3", "E3", "G3"]
+# NOTES = ["A3"]
+DURATION_SECONDS = 15.0
 
 # Melody mode settings. Every note has the same duration.
 MELODY = ["C4", "C4", "G4", "E4", "C4", "G4"]
-NOTE_DURATION_SECONDS = 0.25
+NOTE_DURATION_SECONDS = 0.5
+MELODY_REPEATS = 3  # Use 3 to play the complete melody three times
 
 # The selected headphone channel receives SHIFT_HZ added to every frequency.
-SHIFT_CHANNEL = "left"  # "left" or "right"
+SHIFT_CHANNEL = "right"  # "left" or "right"
 SHIFT_HZ = 10.0         # Positive or negative
 
 # General audio settings.
-SAMPLE_RATE = 44100
+SAMPLE_RATE = 48000
 VOLUME = 0.25           # Keep this low when using headphones
 
 
@@ -155,19 +156,23 @@ def make_melody(
     note_duration: float,
     sample_rate: int,
     frequency_shift_hz: float = 0.0,
+    repeats: int = 1,
 ) -> np.ndarray:
-    """Create a mono melody with equal-duration notes."""
+    """Create a repeated mono melody with equal-duration notes."""
     if not notes:
         raise ValueError("MELODY must contain at least one note.")
+    if type(repeats) is not int or repeats < 1:
+        raise ValueError("MELODY_REPEATS must be a positive integer.")
 
     note_signals = []
-    for note in notes:
-        tone = sine_wave(
-            shifted_frequency(note, frequency_shift_hz),
-            note_duration,
-            sample_rate,
-        )
-        note_signals.append(apply_envelope(tone, sample_rate))
+    for _ in range(repeats):
+        for note in notes:
+            tone = sine_wave(
+                shifted_frequency(note, frequency_shift_hz),
+                note_duration,
+                sample_rate,
+            )
+            note_signals.append(apply_envelope(tone, sample_rate))
 
     return np.concatenate(note_signals)
 
@@ -180,6 +185,7 @@ def make_stereo_audio(
     duration: float,
     sample_rate: int,
     volume: float,
+    melody_repeats: int = 1,
 ) -> np.ndarray:
     """Create normalized stereo audio with one frequency-shifted channel."""
     if shift_channel not in {"left", "right"}:
@@ -192,9 +198,16 @@ def make_stereo_audio(
     left_shift = shift_hz if shift_channel == "left" else 0.0
     right_shift = shift_hz if shift_channel == "right" else 0.0
 
-    generator = make_chord if mode == "chord" else make_melody
-    left = generator(notes, duration, sample_rate, left_shift)
-    right = generator(notes, duration, sample_rate, right_shift)
+    if mode == "chord":
+        left = make_chord(notes, duration, sample_rate, left_shift)
+        right = make_chord(notes, duration, sample_rate, right_shift)
+    else:
+        left = make_melody(
+            notes, duration, sample_rate, left_shift, melody_repeats
+        )
+        right = make_melody(
+            notes, duration, sample_rate, right_shift, melody_repeats
+        )
 
     stereo = np.column_stack((left, right))
 
@@ -228,9 +241,14 @@ def print_playback_summary(
     shift_hz: float,
     duration: float,
     sample_rate: int,
+    melody_repeats: int = 1,
 ) -> None:
     """Print the important settings before playback."""
-    total_duration = duration if mode == "chord" else duration * len(notes)
+    total_duration = (
+        duration
+        if mode == "chord"
+        else duration * len(notes) * melody_repeats
+    )
     notes_label = "Notes" if mode == "chord" else "Melody"
 
     print("\nBinaural Sound Sandbox")
@@ -238,6 +256,7 @@ def print_playback_summary(
     print(f"{notes_label}: {notes}")
     print(f"Shift: {shift_channel} channel, {shift_hz:+.2f} Hz")
     if mode == "melody":
+        print(f"Repeats: {melody_repeats}")
         print(f"Duration: {total_duration:.2f} seconds total "
               f"({duration:.2f} seconds per note)")
     else:
@@ -253,9 +272,11 @@ def main() -> None:
     if mode == "chord":
         selected_notes = NOTES
         duration = DURATION_SECONDS
+        melody_repeats = 1
     elif mode == "melody":
         selected_notes = MELODY
         duration = NOTE_DURATION_SECONDS
+        melody_repeats = MELODY_REPEATS
     else:
         raise ValueError('MODE must be either "chord" or "melody".')
 
@@ -269,6 +290,7 @@ def main() -> None:
         duration=duration,
         sample_rate=SAMPLE_RATE,
         volume=VOLUME,
+        melody_repeats=melody_repeats,
     )
 
     print_playback_summary(
@@ -278,6 +300,7 @@ def main() -> None:
         shift_hz=SHIFT_HZ,
         duration=duration,
         sample_rate=SAMPLE_RATE,
+        melody_repeats=melody_repeats,
     )
     play_audio(audio, SAMPLE_RATE)
 

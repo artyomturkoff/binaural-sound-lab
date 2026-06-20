@@ -82,6 +82,7 @@ MODE = "melody"
 
 MELODY = ["C4", "C4", "G4", "E4", "C4", "G4"]
 NOTE_DURATION_SECONDS = 0.25
+MELODY_REPEATS = 3
 
 SHIFT_CHANNEL = "right"
 SHIFT_HZ = 10.0
@@ -89,8 +90,10 @@ SAMPLE_RATE = 44100
 VOLUME = 0.25
 ```
 
-Every melody note lasts exactly `NOTE_DURATION_SECONDS`. This simple project
-does not include rests, tempo, or a rhythm engine.
+Every melody note lasts exactly `NOTE_DURATION_SECONDS`. Set
+`MELODY_REPEATS = 3` to play the complete list of notes three times, or use `1`
+to play it once. This simple project does not include rests, tempo, or a rhythm
+engine.
 
 ## Hearing safety
 
