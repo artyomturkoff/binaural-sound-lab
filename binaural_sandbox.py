@@ -17,21 +17,21 @@ import numpy as np
 # =============================================================================
 
 # Use "chord" for one sustained note/chord, or "melody" for a note sequence.
-MODE = "chord"
+MODE = "melody"
 
 # Chord mode settings. A one-item list plays a single sustained note.
-NOTES = ["C3", "E3", "G3"]
-# NOTES = ["A3"]
-DURATION_SECONDS = 15.0
+# NOTES = ["C3", "E3", "G3"]
+NOTES = ["C4"]
+DURATION_SECONDS = 10.0
 
 # Melody mode settings. Every note has the same duration.
-MELODY = ["C4", "C4", "G4", "E4", "C4", "G4"]
+MELODY = ["C3", "D3", "E3", "F#3", "G#3", "A#3", "C4", "A#3", "G#3", "F#3", "E3", "D3"]
 NOTE_DURATION_SECONDS = 0.5
 MELODY_REPEATS = 3  # Use 3 to play the complete melody three times
 
 # The selected headphone channel receives SHIFT_HZ added to every frequency.
 SHIFT_CHANNEL = "right"  # "left" or "right"
-SHIFT_HZ = 10.0         # Positive or negative
+SHIFT_HZ = 8.0         # Positive or negative
 
 # General audio settings.
 SAMPLE_RATE = 48000
