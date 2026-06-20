@@ -1,41 +1,12 @@
-"""Simple binaural-style stereo tone experiments.
+"""Reusable engine for binaural-style stereo experiments.
 
-Edit the settings in the next section, then run:
-
-    python binaural_sandbox.py
-
-Channel 0 is left and channel 1 is right.
+Experiment/preset files should import ``run_experiment`` from this module.
+Normally, there is no need to edit this file when creating a new sound preset.
 """
 
 import re
 
 import numpy as np
-
-
-# =============================================================================
-# USER SETTINGS: edit these values to change the experiment
-# =============================================================================
-
-# Use "chord" for one sustained note/chord, or "melody" for a note sequence.
-MODE = "melody"
-
-# Chord mode settings. A one-item list plays a single sustained note.
-# NOTES = ["C3", "E3", "G3"]
-NOTES = ["C4"]
-DURATION_SECONDS = 10.0
-
-# Melody mode settings. Every note has the same duration.
-MELODY = ["C3", "D3", "E3", "F#3", "G#3", "A#3", "C4", "A#3", "G#3", "F#3", "E3", "D3"]
-NOTE_DURATION_SECONDS = 0.5
-MELODY_REPEATS = 3  # Use 3 to play the complete melody three times
-
-# The selected headphone channel receives SHIFT_HZ added to every frequency.
-SHIFT_CHANNEL = "right"  # "left" or "right"
-SHIFT_HZ = 8.0         # Positive or negative
-
-# General audio settings.
-SAMPLE_RATE = 48000
-VOLUME = 0.25           # Keep this low when using headphones
 
 
 # Semitone positions measured from C within an octave.
@@ -221,13 +192,12 @@ def make_stereo_audio(
 
 
 def play_audio(audio: np.ndarray, sample_rate: int) -> None:
-    """Play stereo audio through the current default macOS output device."""
+    """Play stereo audio through the current default output device."""
     try:
         import sounddevice as sd
     except ImportError as error:
         raise RuntimeError(
-            "The sounddevice package is not installed. "
-            "Run: python -m pip install -r requirements.txt"
+            "The sounddevice package is not installed. Run: uv sync"
         ) from error
 
     sd.play(audio, sample_rate)
@@ -257,53 +227,63 @@ def print_playback_summary(
     print(f"Shift: {shift_channel} channel, {shift_hz:+.2f} Hz")
     if mode == "melody":
         print(f"Repeats: {melody_repeats}")
-        print(f"Duration: {total_duration:.2f} seconds total "
-              f"({duration:.2f} seconds per note)")
+        print(
+            f"Duration: {total_duration:.2f} seconds total "
+            f"({duration:.2f} seconds per note)"
+        )
     else:
         print(f"Duration: {total_duration:.2f} seconds")
     print(f"Sample rate: {sample_rate} Hz")
     print("Playing through the default audio output...\n")
 
 
-def main() -> None:
-    """Generate audio from the user settings and play it."""
-    mode = MODE.lower().strip()
+def run_experiment(
+    *,
+    mode: str,
+    notes: list[str],
+    melody: list[str],
+    duration_seconds: float,
+    note_duration_seconds: float,
+    melody_repeats: int,
+    shift_channel: str,
+    shift_hz: float,
+    sample_rate: int,
+    volume: float,
+) -> None:
+    """Generate and play one experiment using settings from a preset file."""
+    selected_mode = mode.lower().strip()
+    selected_channel = shift_channel.lower().strip()
 
-    if mode == "chord":
-        selected_notes = NOTES
-        duration = DURATION_SECONDS
-        melody_repeats = 1
-    elif mode == "melody":
-        selected_notes = MELODY
-        duration = NOTE_DURATION_SECONDS
-        melody_repeats = MELODY_REPEATS
+    if selected_mode == "chord":
+        selected_notes = notes
+        selected_duration = duration_seconds
+        selected_repeats = 1
+    elif selected_mode == "melody":
+        selected_notes = melody
+        selected_duration = note_duration_seconds
+        selected_repeats = melody_repeats
     else:
         raise ValueError('MODE must be either "chord" or "melody".')
 
-    # Audio is generated before the summary so invalid settings fail before
-    # the program announces that playback is starting.
+    # Generate first so invalid settings fail before playback is announced.
     audio = make_stereo_audio(
-        mode=mode,
+        mode=selected_mode,
         notes=selected_notes,
-        shift_channel=SHIFT_CHANNEL.lower().strip(),
-        shift_hz=SHIFT_HZ,
-        duration=duration,
-        sample_rate=SAMPLE_RATE,
-        volume=VOLUME,
-        melody_repeats=melody_repeats,
+        shift_channel=selected_channel,
+        shift_hz=shift_hz,
+        duration=selected_duration,
+        sample_rate=sample_rate,
+        volume=volume,
+        melody_repeats=selected_repeats,
     )
 
     print_playback_summary(
-        mode=mode,
+        mode=selected_mode,
         notes=selected_notes,
-        shift_channel=SHIFT_CHANNEL.lower().strip(),
-        shift_hz=SHIFT_HZ,
-        duration=duration,
-        sample_rate=SAMPLE_RATE,
-        melody_repeats=melody_repeats,
+        shift_channel=selected_channel,
+        shift_hz=shift_hz,
+        duration=selected_duration,
+        sample_rate=sample_rate,
+        melody_repeats=selected_repeats,
     )
-    play_audio(audio, SAMPLE_RATE)
-
-
-if __name__ == "__main__":
-    main()
+    play_audio(audio, sample_rate)

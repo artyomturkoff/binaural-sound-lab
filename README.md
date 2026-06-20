@@ -13,31 +13,37 @@ For example, with A4 (440 Hz), `SHIFT_CHANNEL = "left"`, and
 This is direct sine-wave synthesis, not pitch-shifting DSP. The project supports
 a sustained note/chord mode and a simple equal-duration melody mode.
 
+## Project files
+
+- `binaural_engine.py` contains the reusable synthesis and playback functions.
+  You normally do not need to edit it.
+- `experiment_template.py` is a settings template. Copy it whenever you want to
+  save a new chord or melody preset.
+
+Keep the helper and all preset files in the same folder so Python can import
+`binaural_engine`.
+
 ## Requirements
 
-- Python 3.11.9 or newer
+- Python 3.10 or newer
 - Headphones connected
 - NumPy
 - sounddevice
 
-## Install on macOS
+## Install with uv
 
-Open Terminal in this project folder and create a virtual environment:
+Open Terminal in this project folder and install the dependencies:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+uv sync
 ```
 
-The `sounddevice` package normally installs its audio dependency automatically
-on macOS. If installation reports a PortAudio error, install it with Homebrew
-and then retry:
+The `sounddevice` package normally includes what it needs on macOS. If it
+reports a PortAudio error, install PortAudio with Homebrew and retry:
 
 ```bash
 brew install portaudio
-python -m pip install -r requirements.txt
+uv sync
 ```
 
 Before running the program, select the connected headphones in macOS under
@@ -46,15 +52,42 @@ Before running the program, select the connected headphones in macOS under
 ## Run
 
 ```bash
-python binaural_sandbox.py
+uv run python experiment_template.py
 ```
 
 The program prints the selected settings, generates a stereo NumPy array, and
 plays it using the current macOS default output device.
 
+## Create named presets
+
+Make a copy of the settings template and give it a descriptive name:
+
+```bash
+cp experiment_template.py calming_melody.py
+```
+
+Edit the settings inside `calming_melody.py`, then run that specific preset:
+
+```bash
+uv run python calming_melody.py
+```
+
+You can keep as many preset files as you like, for example:
+
+```text
+binaural_engine.py
+experiment_template.py
+calming_melody.py
+c_major_chord.py
+eight_hz_sequence.py
+```
+
+Only copy the template/preset file. All copies share the functions in
+`binaural_engine.py`.
+
 ## Chord or single-note mode
 
-Edit the settings near the top of `binaural_sandbox.py`:
+Edit the settings in your chosen preset file:
 
 ```python
 MODE = "chord"
