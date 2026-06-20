@@ -55,8 +55,10 @@ Before running the program, select the connected headphones in macOS under
 
 ## Run
 
+Run any named preset. For example:
+
 ```bash
-uv run python sandbox/experiment_template.py
+uv run python sandbox/experiment_1.py
 ```
 
 The program prints the selected settings, generates a stereo NumPy array, and
@@ -92,7 +94,7 @@ You can keep as many preset files as you like:
 binaural_engine.py
 experiment_template.py
 sandbox/
-  experiment_template.py
+  experiment_1.py
   calming_melody.py
   c_major_chord.py
   eight_hz_sequence.py
