@@ -15,8 +15,8 @@ a sustained note/chord mode and a simple equal-duration melody mode.
 
 ## Requirements
 
-- macOS with Python 3.10 or newer
-- Headphones connected to the Mac
+- Python 3.11.9 or newer
+- Headphones connected
 - NumPy
 - sounddevice
 
