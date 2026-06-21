@@ -11,7 +11,8 @@ For example, with A4 (440 Hz), `SHIFT_CHANNEL = "left"`, and
 - Right channel: 440 Hz
 
 This is direct sine-wave synthesis, not pitch-shifting DSP. The project supports
-a sustained note/chord mode and a simple equal-duration melody mode.
+a sustained note/chord mode, a simple equal-duration melody mode, and optional
+automatic swapping of the complete left and right channels.
 
 ## Project files
 
@@ -114,6 +115,7 @@ NOTES = ["C4", "E4", "G4"]
 
 SHIFT_CHANNEL = "left"
 SHIFT_HZ = 10.0
+LEFT_RIGHT_SWAP_HZ = 0.0
 DURATION_SECONDS = 5.0
 SAMPLE_RATE = 44100
 VOLUME = 0.25
@@ -135,6 +137,7 @@ MELODY_REPEATS = 3
 
 SHIFT_CHANNEL = "right"
 SHIFT_HZ = 10.0
+LEFT_RIGHT_SWAP_HZ = 0.0
 SAMPLE_RATE = 44100
 VOLUME = 0.25
 ```
@@ -143,6 +146,26 @@ Every melody note lasts exactly `NOTE_DURATION_SECONDS`. Set
 `MELODY_REPEATS = 3` to play the complete list of notes three times, or use `1`
 to play it once. This simple project does not include rests, tempo, or a rhythm
 engine.
+
+## Automatic left/right swapping
+
+Set `LEFT_RIGHT_SWAP_HZ` to move the shifted and unshifted signals back and
+forth between your ears:
+
+```python
+SHIFT_CHANNEL = "right"
+SHIFT_HZ = 10.0
+LEFT_RIGHT_SWAP_HZ = 10.0
+```
+
+The rate is measured in full cycles. At `10.0`, playback starts with the
+shifted signal in the right channel, swaps it to the left halfway through each
+cycle, and returns it to the right at the start of the next cycle. This
+right-to-left-to-right cycle repeats 10 times per second. The engine uses brief
+smooth transitions to avoid clicks.
+
+Set `LEFT_RIGHT_SWAP_HZ = 0.0` to disable swapping. Existing presets that do
+not provide this setting also keep their original fixed-channel behavior.
 
 ## Hearing safety
 

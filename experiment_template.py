@@ -46,6 +46,11 @@ MELODY_REPEATS = 3
 SHIFT_CHANNEL = "right"  # "left" or "right"
 SHIFT_HZ = 8.0           # Positive or negative
 
+# Swap the complete left and right channels this many full cycles per second.
+# For example, 10.0 produces right -> left -> right 10 times per second.
+# Use 0.0 to keep the selected shifted channel on the same side.
+LEFT_RIGHT_SWAP_HZ = 0.0
+
 # General audio settings.
 SAMPLE_RATE = 48000
 VOLUME = 0.25            # Keep this low when using headphones
@@ -63,4 +68,5 @@ if __name__ == "__main__":
         shift_hz=SHIFT_HZ,
         sample_rate=SAMPLE_RATE,
         volume=VOLUME,
+        left_right_swap_hz=LEFT_RIGHT_SWAP_HZ,
     )

@@ -148,6 +148,77 @@ def make_melody(
     return np.concatenate(note_signals)
 
 
+def apply_left_right_swap(
+    stereo: np.ndarray,
+    sample_rate: int,
+    swap_hz: float,
+    transition_seconds: float = 0.005,
+) -> np.ndarray:
+    """Alternate the left and right channels at a full-cycle rate.
+
+    One cycle starts with the original routing, swaps the channels halfway
+    through, and returns to the original routing at the start of the next
+    cycle. Short transitions prevent clicks at the swap boundaries.
+    """
+    if stereo.ndim != 2 or stereo.shape[1] != 2:
+        raise ValueError("Audio must be a stereo array with exactly 2 channels.")
+    if sample_rate <= 0:
+        raise ValueError("Sample rate must be a positive integer.")
+    if not np.isfinite(swap_hz):
+        raise ValueError("LEFT_RIGHT_SWAP_HZ must be a finite number.")
+    if swap_hz < 0:
+        raise ValueError("LEFT_RIGHT_SWAP_HZ cannot be negative.")
+    if transition_seconds < 0:
+        raise ValueError("Swap transition duration cannot be negative.")
+    if swap_hz == 0 or stereo.shape[0] == 0:
+        return stereo.copy()
+    if swap_hz > sample_rate / 2:
+        raise ValueError(
+            "LEFT_RIGHT_SWAP_HZ cannot exceed half the sample rate."
+        )
+
+    time = np.arange(stereo.shape[0], dtype=np.float64) / sample_rate
+    half_cycle_position = time * (2.0 * swap_hz)
+    half_cycle_number = np.floor(half_cycle_position).astype(np.int64)
+    position_within_half = half_cycle_position - half_cycle_number
+    target_is_swapped = (half_cycle_number % 2).astype(np.float64)
+
+    half_cycle_seconds = 1.0 / (2.0 * swap_hz)
+    effective_transition = min(transition_seconds, half_cycle_seconds)
+    if effective_transition == 0:
+        swap_mix = target_is_swapped
+    else:
+        transition_fraction = np.clip(
+            position_within_half
+            * half_cycle_seconds
+            / effective_transition,
+            0.0,
+            1.0,
+        )
+        # Smoothstep has zero slope at both ends, reducing transition artifacts.
+        transition_mix = transition_fraction**2 * (
+            3.0 - 2.0 * transition_fraction
+        )
+        swap_mix = np.where(
+            target_is_swapped == 1.0,
+            transition_mix,
+            1.0 - transition_mix,
+        )
+        # Playback has no preceding half-cycle to transition from.
+        swap_mix = np.where(half_cycle_number == 0, 0.0, swap_mix)
+
+    original_mix = 1.0 - swap_mix
+    left = stereo[:, 0]
+    right = stereo[:, 1]
+    swapped = np.column_stack(
+        (
+            original_mix * left + swap_mix * right,
+            original_mix * right + swap_mix * left,
+        )
+    )
+    return swapped.astype(stereo.dtype, copy=False)
+
+
 def make_stereo_audio(
     mode: str,
     notes: list[str],
@@ -157,6 +228,7 @@ def make_stereo_audio(
     sample_rate: int,
     volume: float,
     melody_repeats: int = 1,
+    left_right_swap_hz: float = 0.0,
 ) -> np.ndarray:
     """Create normalized stereo audio with one frequency-shifted channel."""
     if shift_channel not in {"left", "right"}:
@@ -188,7 +260,12 @@ def make_stereo_audio(
     if peak > 0.0:
         stereo = stereo / peak
 
-    return (stereo * volume).astype(np.float32)
+    stereo = (stereo * volume).astype(np.float32)
+    return apply_left_right_swap(
+        stereo,
+        sample_rate,
+        left_right_swap_hz,
+    )
 
 
 def play_audio(audio: np.ndarray, sample_rate: int) -> None:
@@ -212,6 +289,7 @@ def print_playback_summary(
     duration: float,
     sample_rate: int,
     melody_repeats: int = 1,
+    left_right_swap_hz: float = 0.0,
 ) -> None:
     """Print the important settings before playback."""
     total_duration = (
@@ -225,6 +303,13 @@ def print_playback_summary(
     print(f"Mode: {mode}")
     print(f"{notes_label}: {notes}")
     print(f"Shift: {shift_channel} channel, {shift_hz:+.2f} Hz")
+    if left_right_swap_hz > 0:
+        print(
+            "Left/right swap: "
+            f"{left_right_swap_hz:.2f} full cycles per second"
+        )
+    else:
+        print("Left/right swap: disabled")
     if mode == "melody":
         print(f"Repeats: {melody_repeats}")
         print(
@@ -249,6 +334,7 @@ def run_experiment(
     shift_hz: float,
     sample_rate: int,
     volume: float,
+    left_right_swap_hz: float = 0.0,
 ) -> None:
     """Generate and play one experiment using settings from a preset file."""
     selected_mode = mode.lower().strip()
@@ -275,6 +361,7 @@ def run_experiment(
         sample_rate=sample_rate,
         volume=volume,
         melody_repeats=selected_repeats,
+        left_right_swap_hz=left_right_swap_hz,
     )
 
     print_playback_summary(
@@ -285,5 +372,6 @@ def run_experiment(
         duration=selected_duration,
         sample_rate=sample_rate,
         melody_repeats=selected_repeats,
+        left_right_swap_hz=left_right_swap_hz,
     )
     play_audio(audio, sample_rate)
