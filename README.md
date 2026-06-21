@@ -50,9 +50,7 @@ brew install portaudio
 uv sync
 ```
 
-Before running the program, select the connected headphones in macOS under
-**System Settings > Sound > Output**.
-
+Before running the code, set headphone volume level to minimum.
 ## Run
 
 Run any named preset. For example:
